@@ -1,17 +1,14 @@
 
+#Code correcting @jmauran91 version. Original version had a bug to get Statistics
 
-import os, sys
+import os
+import sys
 import csv
+from urllib.request import urlopen
 from bs4 import BeautifulSoup
-import urllib2
+import requests
 import xlsxwriter
-from selenium import webdriver
 import pdb
-
-reload(sys)
-sys.setdefaultencoding('utf8')
-
-###
 
 key_stats_on_main =['Market Cap', 'PE Ratio (TTM)', 'EPS (TTM)']
 key_stats_on_stat =['Enterprise Value', 'Trailing P/E', 'Forward P/E',
@@ -26,20 +23,20 @@ for line in pfolio_file:
 
 print(stocks_arr)
 
-browser = webdriver.PhantomJS()
 stock_info_arr = []
 
 for stock in stocks_arr:
     stock_info = []
     ticker = stock[0]
+    print(ticker)
     stock_info.append(ticker)
 
     url = "https://finance.yahoo.com/quote/{0}?p={0}".format(ticker)
     url2 = "https://finance.yahoo.com/quote/{0}/key-statistics?p={0}".format(ticker)
 
-    browser.get(url)
-    innerHTML = browser.execute_script("return document.body.innerHTML")
+    innerHTML = urlopen(url)
     soup = BeautifulSoup(innerHTML, 'html.parser')
+    
     for stat in key_stats_on_main:
         page_stat1 = soup.find(text=stat)
         try:
@@ -56,8 +53,7 @@ for stock in stocks_arr:
 
         stock_info.append(page_statnum1)
 
-    browser.get(url2)
-    innerHTML2 = browser.execute_script("return document.body.innerHTML")
+    innerHTML2 = urlopen(url2)
     soup2 = BeautifulSoup(innerHTML2, 'html.parser')
     for stat in key_stats_on_stat:
         page_stat2 = soup2.find(text=stat)
@@ -67,7 +63,7 @@ for stock in stocks_arr:
                 page_statnum2 = page_row2.find_all('span')[1].contents[0].get_text(strip=True)
                 print(page_statnum2)
             except:
-                page_statnum2 = page_row2.find_all('td')[1].contents[0].get_text(strip=True)
+                page_statnum2 = page_row2.find_all('td')[1].get_text(strip=True)
                 print(page_statnum2)
         except:
             print('Invalid parent for this element')
@@ -77,6 +73,8 @@ for stock in stocks_arr:
     stock_info_arr.append(stock_info)
 
 print(stock_info_arr)
+
+
 
 ########## WRITING OUR RESULTS INTO EXCEL
 
